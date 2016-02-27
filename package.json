@@ -1,0 +1,37 @@
+{
+  "name": "winctl",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "configure": "node-gyp configure",
+    "build": "node-gyp build"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nan": "^2.2.0",
+    "node-gyp": "^3.2.1"
+  },
+  "dependencies": {
+    "bindings": "^1.2.1"
+  },
+  "os": [
+    "win32"
+  ],
+  "gypfile": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thraaawn/winctl.git"
+  },
+  "keywords": [
+    "windows",
+    "window",
+    "autohotkey",
+    "desktop"
+  ],
+  "bugs": {
+    "url": "https://github.com/thraaawn/winctl/issues"
+  },
+  "homepage": "https://github.com/thraaawn/winctl"
+}
