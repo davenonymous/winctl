@@ -1,5 +1,7 @@
 > Windows window manipulation for node.js
 
+[![Build status](https://ci.appveyor.com/api/projects/status/5nihgth8fmlc8xpf?svg=true)](https://ci.appveyor.com/project/thraaawn/winctl)
+
 winctl wraps a few functions of the windows api to allow iterating over currently opened windows and performing a few limited operations on them. This is not a production ready module! There is no real documentation either yet. Sorry for that.
 
 The example has to suffice for now.
