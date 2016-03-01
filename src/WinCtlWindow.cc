@@ -17,8 +17,10 @@ NAN_MODULE_INIT(Window::Init) {
 	Nan::SetPrototypeMethod(tpl, "getPid", getPid);
 	Nan::SetPrototypeMethod(tpl, "getParent", getParent);
 	Nan::SetPrototypeMethod(tpl, "getAncestor", getAncestor);
+	Nan::SetPrototypeMethod(tpl, "getMonitor", getMonitor);
 
 	Nan::SetPrototypeMethod(tpl, "setForegroundWindow", setForegroundWindow);
+	Nan::SetPrototypeMethod(tpl, "setWindowPos", setWindowPos);
 	Nan::SetPrototypeMethod(tpl, "showWindow", showWindow);
 	Nan::SetPrototypeMethod(tpl, "move", move);
 	Nan::SetPrototypeMethod(tpl, "moveRelative", moveRelative);
@@ -160,6 +162,29 @@ NAN_METHOD(Window::getAncestor) {
 	}
 }
 
+NAN_METHOD(Window::getMonitor) {
+	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
+	HMONITOR hMonitor = MonitorFromWindow(obj->windowHandle, MONITOR_DEFAULTTONEAREST);
+	MONITORINFOEX mi;
+	mi.cbSize = sizeof(mi);
+	GetMonitorInfo(hMonitor, &mi);
+
+	v8::Local<v8::Object> result = Nan::New<v8::Object>();
+	bool isPrimary = mi.dwFlags & MONITORINFOF_PRIMARY;
+	Nan::Set(result, Nan::New("name").ToLocalChecked(), Nan::New(mi.szDevice).ToLocalChecked());
+	Nan::Set(result, Nan::New("primary").ToLocalChecked(), Nan::New(isPrimary));
+
+	v8::Local<v8::Object> dim = Nan::New<v8::Object>();
+	Nan::Set(dim, Nan::New("left").ToLocalChecked(), Nan::New(mi.rcMonitor.left));
+	Nan::Set(dim, Nan::New("top").ToLocalChecked(), Nan::New(mi.rcMonitor.top));
+	Nan::Set(dim, Nan::New("right").ToLocalChecked(), Nan::New(mi.rcMonitor.right));
+	Nan::Set(dim, Nan::New("bottom").ToLocalChecked(), Nan::New(mi.rcMonitor.bottom));
+
+	Nan::Set(result, Nan::New("dimensions").ToLocalChecked(), dim);
+
+	info.GetReturnValue().Set(result);
+}
+
 
 
 
@@ -179,6 +204,19 @@ NAN_METHOD(Window::setForegroundWindow) {
 	SetForegroundWindow(obj->windowHandle);
 }
 
+
+NAN_METHOD(Window::setWindowPos) {
+	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
+
+	HWND hWndInsertAfter = (HWND)info[0]->IntegerValue();
+	int X = info[1]->Int32Value();
+	int Y = info[2]->Int32Value();
+	int cx = info[3]->Int32Value();
+	int cy = info[4]->Int32Value();
+	int uFlags = info[5]->Int32Value();
+
+	SetWindowPos(obj->windowHandle, hWndInsertAfter, X, Y, cx, cy, uFlags);
+}
 
 NAN_METHOD(Window::showWindow) {
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());

@@ -28,8 +28,10 @@ private:
 
 	static NAN_METHOD(getParent);
 	static NAN_METHOD(getAncestor);
+	static NAN_METHOD(getMonitor);
 
 	static NAN_METHOD(setForegroundWindow);
+	static NAN_METHOD(setWindowPos);
 	static NAN_METHOD(showWindow);
 	static NAN_METHOD(move);
 	static NAN_METHOD(moveRelative);
