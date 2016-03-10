@@ -42,7 +42,7 @@ winctl.FindByTitle("alc").then(window => {
 // Iterate over all windows with a custom filter -> show all visible windows
 winctl.FindWindows(win => win.isVisible() && win.getTitle()).then(windows => {
 	console.log("Visible windows:");
-	windows.sort((a,b) => a.getTitle().localeCompare(b.getTitle())).forEach(window => console.log(" - %s [pid=%d, hwnd=%d, parent=%d]", window.getTitle(), window.getPid(), window.getHwnd(), window.getParent()));
+	windows.sort((a,b) => a.getTitle().localeCompare(b.getTitle())).forEach(window => console.log(" - %s [classname=%s, pid=%d, hwnd=%d, parent=%d]", window.getTitle(), window.getClassName(), window.getPid(), window.getHwnd(), window.getParent()));
 });
 /* -->
 Visible windows:

@@ -24,6 +24,7 @@ private:
 	static NAN_METHOD(isVisible);
 	static NAN_METHOD(getTitle);
 	static NAN_METHOD(getHwnd);
+	static NAN_METHOD(getClassName);
 	static NAN_METHOD(getPid);
 
 	static NAN_METHOD(getParent);

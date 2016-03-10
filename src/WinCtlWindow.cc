@@ -14,6 +14,7 @@ NAN_MODULE_INIT(Window::Init) {
 	Nan::SetPrototypeMethod(tpl, "isVisible", isVisible);
 	Nan::SetPrototypeMethod(tpl, "getTitle", getTitle);
 	Nan::SetPrototypeMethod(tpl, "getHwnd", getHwnd);
+	Nan::SetPrototypeMethod(tpl, "getClassName", getClassName);
 	Nan::SetPrototypeMethod(tpl, "getPid", getPid);
 	Nan::SetPrototypeMethod(tpl, "getParent", getParent);
 	Nan::SetPrototypeMethod(tpl, "getAncestor", getAncestor);
@@ -136,6 +137,15 @@ NAN_METHOD(Window::getTitle) {
 NAN_METHOD(Window::getHwnd) {
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 	info.GetReturnValue().Set(Nan::New((int)obj->windowHandle));
+}
+
+NAN_METHOD(Window::getClassName) {
+	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
+
+	char wnd_cn[256];
+	GetClassName(obj->windowHandle, wnd_cn, sizeof(wnd_cn));
+
+	info.GetReturnValue().Set(Nan::New(wnd_cn).ToLocalChecked());
 }
 
 NAN_METHOD(Window::getPid) {
