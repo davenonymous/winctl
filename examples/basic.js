@@ -32,40 +32,47 @@ console.log("HWND of window with exact title 'File Explorer':", winctl.GetWindow
 
 // Find first window containing the string 'alc' and bring it to the foreground
 winctl.FindByTitle("alc").then(window => {
-	console.log("Title of window with title 'alc':", window.getTitle());
-	// --> Title of window with title 'alc': Calculator
+    console.log("Title of window with title 'alc':", window.getTitle());
+    // --> Title of window with title 'alc': Calculator
 
-	// Activate the window
-	window.setForegroundWindow();
+    // Activate the window
+    window.setForegroundWindow();
+}).catch(err => {
+    console.log('Calculator is not open.')
 });
 
 // Iterate over all windows with a custom filter -> show all visible windows
 winctl.FindWindows(win => win.isVisible() && win.getTitle()).then(windows => {
-	console.log("Visible windows:");
-	windows.sort((a,b) => a.getTitle().localeCompare(b.getTitle())).forEach(window => console.log(" - %s [classname=%s, pid=%d, hwnd=%d, parent=%d]", window.getTitle(), window.getClassName(), window.getPid(), window.getHwnd(), window.getParent()));
-});
-/* -->
-Visible windows:
- - Bash cpp-modules/winctl [pid=27196, hwnd=26282110, parent=NaN]
- - Bash cpp-modules/winctl [pid=30696, hwnd=10357510, parent=NaN]
- - Calculator [pid=6948, hwnd=5311194, parent=NaN]
- - File Explorer [pid=4860, hwnd=5115324, parent=NaN]
- - src [pid=4860, hwnd=219155192, parent=NaN]
-*/
+        console.log("Visible windows:");
+        windows.sort((a, b) => a.getTitle().localeCompare(b.getTitle())).forEach(window => console.log(" - %s [classname=%s, pid=%d, hwnd=%d, parent=%d]", window.getTitle(), window.getClassName(), window.getPid(), window.getHwnd(), window.getParent()));
+    }).catch(err => { console.error(err) })
+    /* -->
+    Visible windows:
+     - Bash cpp-modules/winctl [pid=27196, hwnd=26282110, parent=NaN]
+     - Bash cpp-modules/winctl [pid=30696, hwnd=10357510, parent=NaN]
+     - Calculator [pid=6948, hwnd=5311194, parent=NaN]
+     - File Explorer [pid=4860, hwnd=5115324, parent=NaN]
+     - src [pid=4860, hwnd=219155192, parent=NaN]
+    */
 
 
 // Log when a new window opens or the active window changes
 winctl.Events.addListener("active-window", function(now, prev) {
-	console.log("Changed active window to: %s [prev=%s]", now.getTitle(), prev.getTitle());
+    console.log("Changed active window to: %s [prev=%s]", now.getTitle(), prev.getTitle());
 });
 
 winctl.Events.addListener("open-window", function(win) {
-	console.log("Opened new window: %s [%d]", win.getTitle(), win.getHwnd());
+    console.log("Opened new window: %s [%d]", win.getTitle(), win.getHwnd());
+});
+
+winctl.Events.addListener("close-window", function(win) {
+    console.log("Closed window: %s [%d]", win.getTitle(), win.getHwnd())
 });
 
 // Stop listening after 5s
 setTimeout(() => {
-	winctl.Events.removeAllListeners("active-window");
-	winctl.Events.removeAllListeners("open-window");
-	console.log("---done---");
+    winctl.Events.removeAllListeners("active-window");
+    winctl.Events.removeAllListeners("open-window");
+    winctl.Events.removeAllListeners("close-window");
+    console.log("---done---");
 }, 5000);
