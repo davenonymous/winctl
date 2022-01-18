@@ -2,13 +2,14 @@
 
 using v8::FunctionTemplate;
 
-NAN_MODULE_INIT(InitAll) {
-	Window::Init(target);
+void InitAll(v8::Local<v8::Object> exports) {
+	Window::Init(exports);
 
-	Nan::Set(target, Nan::New("GetActiveWindow").ToLocalChecked(), Nan::GetFunction(Nan::New<FunctionTemplate>(Window::GetActiveWindow)).ToLocalChecked());
-	Nan::Set(target, Nan::New("GetWindowByClassName").ToLocalChecked(), Nan::GetFunction(Nan::New<FunctionTemplate>(Window::GetWindowByClassName)).ToLocalChecked());
-	Nan::Set(target, Nan::New("GetWindowByTitleExact").ToLocalChecked(), Nan::GetFunction(Nan::New<FunctionTemplate>(Window::GetWindowByTitleExact)).ToLocalChecked());
-	Nan::Set(target, Nan::New("EnumerateWindows").ToLocalChecked(), Nan::GetFunction(Nan::New<FunctionTemplate>(Window::EnumerateWindows)).ToLocalChecked());
+	v8::Local<v8::Context> context = exports->CreationContext();
+	exports->Set(context, Nan::New("GetActiveWindow").ToLocalChecked(), Nan::New<v8::FunctionTemplate>(Window::GetActiveWindow)->GetFunction(context).ToLocalChecked());
+	exports->Set(context, Nan::New("GetWindowByClassName").ToLocalChecked(), Nan::New<v8::FunctionTemplate>(Window::GetWindowByClassName)->GetFunction(context).ToLocalChecked());
+	exports->Set(context, Nan::New("GetWindowByTitleExact").ToLocalChecked(), Nan::New<v8::FunctionTemplate>(Window::GetWindowByTitleExact)->GetFunction(context).ToLocalChecked());
+	exports->Set(context, Nan::New("EnumerateWindows").ToLocalChecked(), Nan::New<v8::FunctionTemplate>(Window::EnumerateWindows)->GetFunction(context).ToLocalChecked());
 }
 
 NODE_MODULE(NativeExtension, InitAll)

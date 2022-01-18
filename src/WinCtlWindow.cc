@@ -6,7 +6,16 @@
 
 Nan::Persistent<v8::Function> Window::constructor;
 
-NAN_MODULE_INIT(Window::Init) {
+Window::Window(HWND handle) {
+	this->windowHandle = handle;
+}
+
+Window::~Window() {}
+
+void Window::Init (v8::Local<v8::Object> exports) {
+	v8::Local<v8::Context> context = exports->CreationContext();
+	Nan::HandleScope scope;
+
 	v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(New);
 	tpl->SetClassName(Nan::New("Window").ToLocalChecked());
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
@@ -28,30 +37,26 @@ NAN_MODULE_INIT(Window::Init) {
 	Nan::SetPrototypeMethod(tpl, "dimensions", dimensions);
 
 	constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
-	Nan::Set(target, Nan::New("Window").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
+	exports->Set(context, Nan::New("Window").ToLocalChecked(), tpl->GetFunction(context).ToLocalChecked());
 }
 
-Window::Window(HWND handle) {
-	this->windowHandle = handle;
-}
 
-Window::~Window() {}
-
-
-NAN_METHOD(Window::New) {
+void Window::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	if (info.IsConstructCall()) {
-		Window *obj = new Window((HWND)info[0]->IntegerValue());
+		Window *obj = new Window((HWND)info[0]->IntegerValue(context).FromJust());
 		obj->Wrap(info.This());
 		info.GetReturnValue().Set(info.This());
 	} else {
 		const int argc = 1;
 		v8::Local<v8::Value> argv[argc] = {info[0]};
 		v8::Local<v8::Function> cons = Nan::New(constructor);
-		info.GetReturnValue().Set(cons->NewInstance(argc, argv));
+		info.GetReturnValue().Set(cons->NewInstance(context, argc, argv).ToLocalChecked());
 	}
 }
 
-NAN_METHOD(Window::GetActiveWindow) {
+void Window::GetActiveWindow(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	v8::Local<v8::Function> cons = Nan::New(constructor);
 	const int argc = 1;
 	HWND fgWin = GetForegroundWindow();
@@ -59,23 +64,27 @@ NAN_METHOD(Window::GetActiveWindow) {
 	info.GetReturnValue().Set(Nan::NewInstance(cons, argc, argv).ToLocalChecked());
 }
 
-NAN_METHOD(Window::GetWindowByClassName) {
+void Window::GetWindowByClassName(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	v8::Local<v8::Function> cons = Nan::New(constructor);
 
-	v8::String::Utf8Value className(info[0]);
-	std::string sClassName = std::string(*className);
+	v8::Isolate* isolate = info.GetIsolate();
+	v8::String::Utf8Value classname(isolate, info[0]);
+	std::string sClassname(*classname);
 
-	HWND fgWin = FindWindowEx(0, 0, sClassName.c_str(), 0);
+	HWND fgWin = FindWindowEx(0, 0, sClassname.c_str(), 0);
 
 	const int argc = 1;
 	v8::Local<v8::Value> argv[1] = {Nan::New((int)fgWin)};
 	info.GetReturnValue().Set(Nan::NewInstance(cons, argc, argv).ToLocalChecked());
 }
 
-NAN_METHOD(Window::GetWindowByTitleExact) {
+void Window::GetWindowByTitleExact(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	v8::Local<v8::Function> cons = Nan::New(constructor);
 
-	v8::String::Utf8Value exactTitle(info[0]);
+	v8::Isolate* isolate = info.GetIsolate();
+	v8::String::Utf8Value exactTitle(isolate, info[0]);
 	std::string sExactTitle = std::string(*exactTitle);
 
 	HWND fgWin = FindWindow(NULL, sExactTitle.c_str());
@@ -86,8 +95,8 @@ NAN_METHOD(Window::GetWindowByTitleExact) {
 }
 
 v8::Local<v8::Function> enumCallback;
-BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
-{
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
+
 	const int constructorArgc = 1;
 	v8::Local<v8::Value> constructorArgv[1] = {Nan::New((int)hwnd)};
 
@@ -96,13 +105,16 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 	const int callbackArgc = 1;
 	v8::Local<v8::Value> callbackArgv[1] = {Nan::NewInstance(cons, constructorArgc, constructorArgv).ToLocalChecked()};
 
-    v8::Local<v8::Value> callbackResult = Nan::MakeCallback(Nan::GetCurrentContext()->Global(), enumCallback, callbackArgc, callbackArgv);
 
-    return callbackResult->BooleanValue();
+	Nan::AsyncResource resource("nan:makeCallback");
+	resource.runInAsyncScope(Nan::GetCurrentContext()->Global(), enumCallback, callbackArgc, callbackArgv);
+
+	return true;
 }
 
 
-NAN_METHOD(Window::EnumerateWindows) {
+void Window::EnumerateWindows(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	enumCallback = info[0].As<v8::Function>();
 
 	EnumWindows(EnumWindowsProc, 0);
@@ -112,20 +124,23 @@ NAN_METHOD(Window::EnumerateWindows) {
 
 
 
-NAN_METHOD(Window::exists) {
+void Window::exists(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 
 	info.GetReturnValue().Set(Nan::New(IsWindow(obj->windowHandle)));
 }
 
-NAN_METHOD(Window::isVisible) {
+void Window::isVisible(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 
 	info.GetReturnValue().Set(Nan::New(IsWindowVisible(obj->windowHandle)));
 }
 
 
-NAN_METHOD(Window::getTitle) {
+void Window::getTitle(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 
 	char wnd_title[256];
@@ -134,12 +149,14 @@ NAN_METHOD(Window::getTitle) {
 	info.GetReturnValue().Set(Nan::New(wnd_title).ToLocalChecked());
 }
 
-NAN_METHOD(Window::getHwnd) {
+void Window::getHwnd(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 	info.GetReturnValue().Set(Nan::New((int)obj->windowHandle));
 }
 
-NAN_METHOD(Window::getClassName) {
+void Window::getClassName(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 
 	char wnd_cn[256];
@@ -148,7 +165,8 @@ NAN_METHOD(Window::getClassName) {
 	info.GetReturnValue().Set(Nan::New(wnd_cn).ToLocalChecked());
 }
 
-NAN_METHOD(Window::getPid) {
+void Window::getPid(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 	DWORD lpdwProcessId;
 	GetWindowThreadProcessId(obj->windowHandle, &lpdwProcessId);
@@ -156,7 +174,8 @@ NAN_METHOD(Window::getPid) {
 	info.GetReturnValue().Set(Nan::New((int)lpdwProcessId));
 }
 
-NAN_METHOD(Window::getParent) {
+void Window::getParent(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 	HWND parentHwnd = GetParent(obj->windowHandle);
 	if(parentHwnd != NULL) {
@@ -164,15 +183,18 @@ NAN_METHOD(Window::getParent) {
 	}
 }
 
-NAN_METHOD(Window::getAncestor) {
+void Window::getAncestor(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
-	HWND ancestorHwnd = GetAncestor(obj->windowHandle, info[0]->Int32Value());
+
+	HWND ancestorHwnd = GetAncestor(obj->windowHandle, info[0]->Int32Value(context).ToChecked());
 	if(ancestorHwnd != NULL) {
 		info.GetReturnValue().Set(Nan::New((int)ancestorHwnd));
 	}
 }
 
-NAN_METHOD(Window::getMonitor) {
+void Window::getMonitor(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 	HMONITOR hMonitor = MonitorFromWindow(obj->windowHandle, MONITOR_DEFAULTTONEAREST);
 	MONITORINFOEX mi;
@@ -208,54 +230,59 @@ NAN_METHOD(Window::getMonitor) {
 
 
 
-NAN_METHOD(Window::setForegroundWindow) {
+void Window::setForegroundWindow(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 
 	SetForegroundWindow(obj->windowHandle);
 }
 
 
-NAN_METHOD(Window::setWindowPos) {
+void Window::setWindowPos(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 
-	HWND hWndInsertAfter = (HWND)info[0]->IntegerValue();
-	int X = info[1]->Int32Value();
-	int Y = info[2]->Int32Value();
-	int cx = info[3]->Int32Value();
-	int cy = info[4]->Int32Value();
-	int uFlags = info[5]->Int32Value();
+	HWND hWndInsertAfter = (HWND)info[0]->IntegerValue(context).ToChecked();
+	int X = info[1]->Int32Value(context).ToChecked();
+	int Y = info[2]->Int32Value(context).ToChecked();
+	int cx = info[3]->Int32Value(context).ToChecked();
+	int cy = info[4]->Int32Value(context).ToChecked();
+	int uFlags = info[5]->Int32Value(context).ToChecked();
 
 	SetWindowPos(obj->windowHandle, hWndInsertAfter, X, Y, cx, cy, uFlags);
 }
 
-NAN_METHOD(Window::showWindow) {
+void Window::showWindow(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 
-	const int nCmdShow = info[0]->Int32Value();
+	const int nCmdShow = info[0]->Int32Value(context).ToChecked();
 	ShowWindow(obj->windowHandle, nCmdShow);
 }
 
-NAN_METHOD(Window::move) {
+void Window::move(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 
-	const size_t x = info[0]->Int32Value();
-	const size_t y = info[1]->Int32Value();
-	const size_t w = info[2]->Int32Value();
-	const size_t h = info[3]->Int32Value();
+	const size_t x = info[0]->Int32Value(context).ToChecked();
+	const size_t y = info[1]->Int32Value(context).ToChecked();
+	const size_t w = info[2]->Int32Value(context).ToChecked();
+	const size_t h = info[3]->Int32Value(context).ToChecked();
 
 	MoveWindow(obj->windowHandle, x, y, w, h, true);
 }
 
-NAN_METHOD(Window::moveRelative) {
+void Window::moveRelative(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 
 	RECT dim;
 	GetWindowRect(obj->windowHandle, &dim);
 
-	const size_t dx = info[0]->Int32Value();
-	const size_t dy = info[1]->Int32Value();
-	const size_t dw = info[2]->Int32Value();
-	const size_t dh = info[3]->Int32Value();
+	const size_t dx = info[0]->Int32Value(context).ToChecked();
+	const size_t dy = info[1]->Int32Value(context).ToChecked();
+	const size_t dw = info[2]->Int32Value(context).ToChecked();
+	const size_t dh = info[3]->Int32Value(context).ToChecked();
 
 	const size_t x = dim.left + dx;
 	const size_t y = dim.top + dy;
@@ -266,7 +293,8 @@ NAN_METHOD(Window::moveRelative) {
 }
 
 
-NAN_METHOD(Window::dimensions) {
+void Window::dimensions(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	Window* obj = Nan::ObjectWrap::Unwrap<Window>(info.This());
 	RECT dim;
 	GetWindowRect(obj->windowHandle, &dim);

@@ -6,37 +6,40 @@
 
 class Window : public Nan::ObjectWrap {
 public:
-	static NAN_MODULE_INIT(Init);
-	static NAN_METHOD(GetActiveWindow);
-	static NAN_METHOD(GetWindowByClassName);
-	static NAN_METHOD(GetWindowByTitleExact);
-	static NAN_METHOD(EnumerateWindows);
-
-	static Nan::Persistent<v8::Function> constructor;
-
-private:
 	explicit Window(HWND handle);
 	~Window();
 
-	static NAN_METHOD(New);
+	static void Init(v8::Local<v8::Object> exports);
+	static void GetActiveWindow(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void GetWindowByClassName(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void GetWindowByTitleExact(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void EnumerateWindows(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static Nan::Persistent<v8::Function> constructor;
 
-	static NAN_METHOD(exists);
-	static NAN_METHOD(isVisible);
-	static NAN_METHOD(getTitle);
-	static NAN_METHOD(getHwnd);
-	static NAN_METHOD(getClassName);
-	static NAN_METHOD(getPid);
+private:
 
-	static NAN_METHOD(getParent);
-	static NAN_METHOD(getAncestor);
-	static NAN_METHOD(getMonitor);
+	static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
 
-	static NAN_METHOD(setForegroundWindow);
-	static NAN_METHOD(setWindowPos);
-	static NAN_METHOD(showWindow);
-	static NAN_METHOD(move);
-	static NAN_METHOD(moveRelative);
-	static NAN_METHOD(dimensions);
+	static void exists(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void isVisible(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void getTitle(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void getHwnd(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void getClassName(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void getPid(const Nan::FunctionCallbackInfo<v8::Value>& info);
+
+	static void getParent(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void getAncestor(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void getMonitor(const Nan::FunctionCallbackInfo<v8::Value>& info);
+
+	static void setForegroundWindow(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void setWindowPos(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void showWindow(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void move(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void moveRelative(const Nan::FunctionCallbackInfo<v8::Value>& info);
+	static void dimensions(const Nan::FunctionCallbackInfo<v8::Value>& info);
+
+
+
 
 	HWND windowHandle;
 };
