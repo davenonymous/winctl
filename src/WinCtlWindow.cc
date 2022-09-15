@@ -13,7 +13,7 @@ Window::Window(HWND handle) {
 Window::~Window() {}
 
 void Window::Init (v8::Local<v8::Object> exports) {
-	v8::Local<v8::Context> context = exports->CreationContext();
+	v8::Local<v8::Context> context = exports->GetCreationContext().ToLocalChecked();
 	Nan::HandleScope scope;
 
 	v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(New);
